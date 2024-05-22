@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload File</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload your output.xml</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label for="project_name">Select Project Name:</label>
+        <select name="project_name" id="project_name">
+            <option value="Cirpack">Cirpack</option>            
+            <option value="USC">USC</option>
+        </select>
+        <br><br>
+
+        <label for="product_name">Select Product Name:</label>
+        <select name="product_name" id="product_name">
+            <option value="ims_core">IMS core</option>
+            <option value="sbc_core">SBC core</option>
+            <option value="ims_web">IMS web</option>
+            <option value="sbc_web">SBC web</option>
+            <option value="usc_sanity">USC sanity</option>
+        </select>
+        <br><br>
+
+        <label for="week">Enter Week:</label>
+        <input type="number" name="week" id="week" min="1" max="52" required>
+        <br><br>
+
+        <label for="year">Enter Year:</label>
+        <input type="number" name="year" id="year" min="2000" max="2100" required>
+        <br><br>
+
+        <label for="file">Upload File:</label>
+        <input type="file" name="file" id="file" required>
+        <br><br>
+        <div id="error_message" class="error" style="display:none;">Error: The uploaded file must be named output.xml</div>
+        <button type="submit">Upload</button>
+    </form>
+
+    <h2>Analyze The Auto Non-Regression Test Results</h2>
+    <table id="responseTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>Week</th>
+                <th>Product</th>
+                <th>Test File Name</th>
+                <th>Test Case Name</th>
+                <th>Failed Keyword</th>
+                <th>Robot log</th>
+                <th>Wrong/Missing Env</th>
+                <th>Product Bug</th>
+                <th>Slow Loading</th>
+                <th>Behavior Changed</th>
+                <th>Incorrect Auto Script</th>
+                <th>Random Failed</th>
+            </tr>
+        </thead>
+        <tbody id="responseBody">
+        </tbody>
+    </table>
+
+    <script>
+        $(document).ready(function () {
+            $('#uploadForm').on('submit', function (event) {
+                event.preventDefault();
+                var fileInput = $('#file')[0];
+                var fileName = fileInput.files[0].name;
+
+                if (fileName == 'output.xml') {
+                    $('#error_message').show();
+                    return;
+                } else {
+                    $('#error_message').hide();
+                }
+
+                var formData = new FormData(this);
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        $('#responseTable').show();
+                        $('#responseBody').empty();  // Clear previous results
+
+                        response.forEach(function (item) {
+                            var row = `<tr>
+                                <td>${item.Week}</td>
+                                <td>${item.Product}</td>
+                                <td>${item.Test_File_Name}</td>
+                                <td>${item.Test_case_name}</td>
+                                <td>${item.Failed_Keyword}</td>
+                                <td>${item.Robot_log}</td>
+                                <td>${item["Wrong/Missing environment set up"] || '0%'}</td>
+                                <td>${item["Product Bug"] || '0%'}</td>
+                                <td>${item["Slow Loading"] || '0%'}</td>
+                                <td>${item["Behavior Changed"] || '0%'}</td>
+                                <td>${item["Incorrect auto script"] || '0%'}</td>
+                                <td>${item["Random failed"] || '0%'}</td>
+                            </tr>`;
+                            $('#responseBody').append(row);
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
